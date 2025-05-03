@@ -1,0 +1,48 @@
+spawn ./geth attach ./data/geth.ipc
+expect "> "
+send -- "personal.newAccount()\n"
+expect "Passphrase: $"
+send_user -- "The password for both accounts will be '123'"
+send -- "123\n"
+expect "Repeat passphrase: $"
+send -- "123\n"
+expect -re "\"(.*)\".*> $"
+set user(1) $expect_out(1,string)
+set pass($user(1)) "123"
+send -- "personal.newAccount()\n"
+expect "Passphrase: $"
+send -- "123\n"
+expect "Repeat passphrase: $"
+send -- "123\n"
+expect -re "\"(.*)\".*> $"
+set user(2) $expect_out(1,string)
+set pass($user(2)) "123"
+send -- "miner.setEtherbase(\"$user(1)\")\n"
+expect "> $"
+send -- "miner.start()\n"
+send_user -- "\r# Short wait here to mine\n"
+sleep 5
+expect "> $"
+send_user -- "\r# Here is the balance we've mined\n> "
+send -- "eth.getBalance(\"$user(1)\")\n"
+expect "> $"
+send_user -- "\r# Here is the block number we're on\n> "
+send -- "eth.blockNumber\n"
+expect "> $"
+send -- "personal.unlockAccount(\"$user(1)\", \"$pass($user(1))\")\n"
+expect "> $"
+send -- "eth.sendTransaction({from:\"$user(1)\", to:\"$user(2)\", value: web3.toWei(1, \"ether\")})\n"
+expect -re "\".*\".*\".*\".*\"(.*)\".*> $"
+set transaction(1) $expect_out(1,string)
+send_user -- "\r# Short wait here too to mine the transaction\n> "
+sleep 5
+send_user -- "\r# And here are the balances to prove it\n> "
+send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
+expect "> $"
+send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
+expect "> $"
+send -- "eth.getTransaction(\"$transaction(1)\")\n"
+expect "> $"
+send -- "miner.stop()\n"
+
+interact
