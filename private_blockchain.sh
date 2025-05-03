@@ -33,7 +33,7 @@ if [ $? != 0 ]; then echo "init failed"; exit 1; fi
 echo "starting server in background"
 ./geth --rpc --rpcport "8085" --datadir ./data --nodiscover --networkid 41900 --maxpeers 0 --rpcaddr "0.0.0.0" --rpccorsdomain "*" --rpcapi "eth,net,personal,debug" --allow-insecure-unlock > ./data/run_log 2>&1 &
 echo "waiting until ipc exists"
-while ! grep "IPC" .data/run_log; do
+while ! grep "IPC" ./data/run_log; do
   sleep 0.1
 done
 # echo "assuming it worked because i don't know how to check. continuing in 5"
