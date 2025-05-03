@@ -1,8 +1,13 @@
 spawn ./geth attach ./data/geth.ipc
-expect "> "
+# this is the escape code at the end of each number because they're red.
+set str_escape "\\e\\\[32m"
+set close_escape "\\e\\\[0m"
+set number_re "(\\d+)$close_escape\r\n> $"
+
+expect "> $"
+send_user -- "\r# First we create two accounts, and store their id's (the password for each will be '123')\n> "
 send -- "personal.newAccount()\n"
 expect "Passphrase: $"
-send_user -- "The password for both accounts will be '123'"
 send -- "123\n"
 expect "Repeat passphrase: $"
 send -- "123\n"
@@ -17,32 +22,53 @@ send -- "123\n"
 expect -re "\"(.*)\".*> $"
 set user(2) $expect_out(1,string)
 set pass($user(2)) "123"
+send_user -- "\r# Now we'll set the first account as the owner of the mining we'll do\n> "
 send -- "miner.setEtherbase(\"$user(1)\")\n"
 expect "> $"
 send -- "miner.start()\n"
-send_user -- "\r# Short wait here to mine\n"
-sleep 5
 expect "> $"
-send_user -- "\r# Here is the balance we've mined\n> "
+send_user -- "\r# Short wait here to mine\n"
+log_user 0
+send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
+expect -re $number_re
+while {$expect_out(1,string) < 2} {
+	sleep 1
+	send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
+	expect -re $number_re
+}
+log_user 1
+send_user -- "\r# That should be enough mining.\n# Here is the raw balance we've mined\n> "
 send -- "eth.getBalance(\"$user(1)\")\n"
+expect "> $"
+send_user -- "\r# and here is the value of that balance\n> "
+send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
 expect "> $"
 send_user -- "\r# Here is the block number we're on\n> "
 send -- "eth.blockNumber\n"
 expect "> $"
+send_user -- "\r# Now let's send a transaction between our users\n> "
 send -- "personal.unlockAccount(\"$user(1)\", \"$pass($user(1))\")\n"
 expect "> $"
 send -- "eth.sendTransaction({from:\"$user(1)\", to:\"$user(2)\", value: web3.toWei(1, \"ether\")})\n"
-expect -re "\".*\".*\".*\".*\"(.*)\".*> $"
+expect -re "$str_escape\"(.*)\"$close_escape\r\n> $"
 set transaction(1) $expect_out(1,string)
 send_user -- "\r# Short wait here too to mine the transaction\n> "
-sleep 5
+log_user 0
+send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
+expect -re $number_re
+while {$expect_out(1,string) < 1} {
+	sleep 1
+	send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
+	expect -re $number_re
+}
+log_user 1
 send_user -- "\r# And here are the balances to prove it\n> "
 send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
 expect "> $"
 send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
 expect "> $"
+send_user -- "\r# And here is the record of the transaction\n> "
 send -- "eth.getTransaction(\"$transaction(1)\")\n"
 expect "> $"
 send -- "miner.stop()\n"
-
 interact
