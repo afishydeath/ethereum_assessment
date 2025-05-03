@@ -1,27 +1,3 @@
-# no shebang because i'm annoying
-
-# contents of genesis.json at time of writing, as a backup
-: '
-{
-  "nonce": "0x0000000000000042",
-  "timestamp": "0x0",
-  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "extraData": "0x00",
-  "gasLimit": "0x8000000",
-  "difficulty": "0x400",
-  "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "coinbase": "0x3333333333333333333333333333333333333333",
-  "alloc": {},
-  "config": {
-    "chainId": 987,
-    "homesteadBlock": 0,
-    "eip150Block": 0,
-    "eip155Block": 0,
-    "eip158Block": 0
-  }
-}
-'
-
 if ! [ -f ./geth ]; then echo "./geth not present"; exit 1; fi
 if ! [ -f ./genesis.json ]; then echo "./genesis.json not present"; exit 1; fi
 if [ -d ./data ]; then echo "data dir exists, clearing"; rm -rf ./data; fi
@@ -32,7 +8,7 @@ echo "running init"
 wait
 if [ $? != 0 ]; then echo "init failed"; exit 1; fi
 echo "starting server in background"
-./geth --rpc --rpcport "8085" --datadir ./data --nodiscover --networkid 41900 --maxpeers 0 --rpcaddr "0.0.0.0" --rpccorsdomain "*" --rpcapi "eth,net,personal,debug" --allow-insecure-unlock > ./data/run_log 2>&1 &
+./geth --rpc --rpcport "8085" --datadir ./data --nodiscover --networkid 41900  --allow-insecure-unlock > ./data/run_log 2>&1 &
 echo "waiting until ipc exists"
 while ! grep "IPC" ./data/run_log; do
   sleep 0.1
