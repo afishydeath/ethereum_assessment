@@ -24,7 +24,8 @@
 
 if ! [ -f ./geth ]; then echo "./geth not present"; exit 1; fi
 if ! [ -f ./genesis.json ]; then echo "./genesis.json not present"; exit 1; fi
-if [ -d ./data ]; then echo "data dir exists, clearing"; rm -rf ./data; mkdir data; fi
+if [ -d ./data ]; then echo "data dir exists, clearing"; rm -rf ./data; fi
+mkdir data
 if ! which expect > /dev/null 2>&1; then echo "expect command missing"; exit 1; fi
 echo "running init"
 ./geth --rpc --rpcport "8085" --datadir ./data init ./genesis.json > ./data/init_log 2>&1
