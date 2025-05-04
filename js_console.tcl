@@ -58,8 +58,8 @@ set transaction(1) $expect_out(1,string)
 send_user -- "\r# Here we can see that the transaction is pending\n> "
 send -- "txpool.content.pending\n"
 expect "> $"
-send -- "miner.start()\n"
 send_user -- "\r# Short wait here to mine the transaction\n> "
+send -- "miner.start()\n"
 log_user 0
 send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
 expect -re $number_re
