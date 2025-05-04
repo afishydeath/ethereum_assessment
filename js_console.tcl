@@ -37,7 +37,10 @@ while {$expect_out(1,string) < 2} {
 	expect -re $number_re
 }
 log_user 1
-send_user -- "\r# That should be enough mining.\n# Here is the raw balance we've mined\n> "
+send_user -- "\r# That should be enough mining.\n> "
+send -- "miner.stop()\n"
+expect "> $"
+send_user -- "\r# Here's the balance we've mined so far\n> "
 send -- "eth.getBalance(\"$user(1)\")\n"
 expect "> $"
 send_user -- "\r# and here is the value of that balance\n> "
@@ -52,7 +55,11 @@ expect "> $"
 send -- "eth.sendTransaction({from:\"$user(1)\", to:\"$user(2)\", value: web3.toWei(1, \"ether\")})\n"
 expect -re "$str_escape\"(.*)\"$close_escape\r\n> $"
 set transaction(1) $expect_out(1,string)
-send_user -- "\r# Short wait here too to mine the transaction\n> "
+send_user -- "\r# Here we can see that the transaction is pending\n> "
+send -- "txpool.content.pending\n"
+expect "> $"
+send -- "miner.start()\n"
+send_user -- "\r# Short wait here to mine the transaction\n> "
 log_user 0
 send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
 expect -re $number_re
@@ -62,13 +69,16 @@ while {$expect_out(1,string) < 1} {
 	expect -re $number_re
 }
 log_user 1
+send_user -- "\r# The transaction has been processed!\n> "
+send -- "miner.stop()\n"
+expect "> $"
+send_user -- "\r# Here's the record of the transaction\n> "
+send -- "eth.getTransaction(\"$transaction(1)\")\n"
+expect "> $"
 send_user -- "\r# And here are the balances to prove it\n> "
 send -- "web3.fromWei(eth.getBalance(\"$user(1)\"), \"ether\")\n"
 expect "> $"
 send -- "web3.fromWei(eth.getBalance(\"$user(2)\"), \"ether\")\n"
 expect "> $"
-send_user -- "\r# And here is the record of the transaction\n> "
-send -- "eth.getTransaction(\"$transaction(1)\")\n"
-expect "> $"
-send -- "miner.stop()\n"
+send_user -- "\r# And now i'll drop you back into the terminal\n> "
 interact
