@@ -70,7 +70,7 @@ while {$expect_out(1,string) < 1} {
 	expect -re $number_re
 }
 log_user 1
-send_user -- "\n# The transaction has been processed!\n> "
+send_user -- "\r# The transaction has been processed!\n> "
 send -- "miner.stop()\n"
 expect "> $"
 send_user -- "\r# Here's the record of the transaction\n> "
